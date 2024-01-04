@@ -13,44 +13,6 @@
 1. 解壓縮專案中的 `dm.zip` 檔案。
 2. 以系統管理員身分執行解壓縮後的 `.bat` 檔案。
 
-## 使用方法
-
-若要在您的.NET專案中使用`DmService` DLL，大漠3.1233須將專案設定成x86，然後依照下列步驟進行：
-
-**方法一：加入參考**
-
-1. **將`DmService`專案加入至您的解決方案**：
-   - 在Visual Studio中，右鍵點擊解決方案名稱，選擇「新增」->「現有專案…」。
-   - 瀏覽至`DmService`專案檔案（通常是`.csproj`或`.vbproj`檔案），然後點擊「開啟」。
-
-2. **為您的專案新增對`DmService`的參考**：
-   - 在解決方案資源管理器中，右鍵點擊您想使用`DmService`的專案名稱。
-   - 選擇「新增」->「參考…」，在彈出的對話框中選擇「專案」分頁。
-   - 於列表中勾選`DmService`專案，然後點擊「確定」。
-
-3. **在您的專案中使用`DmService`**：
-   - 在您的程式碼檔案中，新增對`DmService`命名空間的引用：
-     ```csharp
-     using DmService; // 請替換為實際的命名空間。
-     ```
-   - 您可以透過繼承`DmService`來擴展功能：
-     ```csharp
-     public class MyDmService : DmService {
-       // 新增或覆寫功能。
-     }
-     ```
-   - 或者，您可以建立一個`DmService`的實例：
-     ```csharp
-     var dmService = new DmService();
-     // 使用dmService實例。
-     ```
-
-請依照您實際的命名空間和類別名稱調整上述代碼範例。
-
-
-**方法二：使用DLL**
-   - 將本專案建置成DLL檔案，然後在你的應用程式中直接引用這個DLL。
-
 # 初始化
 ```csharp
 DmService? dm = null;
@@ -65,7 +27,6 @@ catch (Exception e)
     Console.WriteLine("dm初始化失敗");
     Console.ReadKey();
 }
-
 
 int hwnd = dm.FindWindow("lpClassName", "lpWindowName"); //找窗口句炳
 dm.BindWindow(hwnd); //輸入句柄並綁定
@@ -120,7 +81,43 @@ Console.WriteLine("沒找到 圖片名稱");
 - sim 設為0.9時候，會尋找相似度90%以上的圖片，同大漠
 - click 設為true時候，會點擊找到的圖片或文字
 
+## 使用方法
 
+若要在您的.NET專案中使用`DmService` DLL，大漠3.1233須將專案設定成x86，然後依照下列步驟進行：
+
+**方法一：加入參考**
+
+1. **將`DmService`專案加入至您的解決方案**：
+   - 在Visual Studio中，右鍵點擊解決方案名稱，選擇「新增」->「現有專案…」。
+   - 瀏覽至`DmService`專案檔案（通常是`.csproj`或`.vbproj`檔案），然後點擊「開啟」。
+
+2. **為您的專案新增對`DmService`的參考**：
+   - 在解決方案資源管理器中，右鍵點擊您想使用`DmService`的專案名稱。
+   - 選擇「新增」->「參考…」，在彈出的對話框中選擇「專案」分頁。
+   - 於列表中勾選`DmService`專案，然後點擊「確定」。
+
+3. **在您的專案中使用`DmService`**：
+   - 在您的程式碼檔案中，新增對`DmService`命名空間的引用：
+     ```csharp
+     using DmService; // 請替換為實際的命名空間。
+     ```
+   - 您可以透過繼承`DmService`來擴展功能：
+     ```csharp
+     public class MyDmService : DmService {
+       // 新增或覆寫功能。
+     }
+     ```
+   - 或者，您可以建立一個`DmService`的實例：
+     ```csharp
+     var dmService = new DmService();
+     // 使用dmService實例。
+     ```
+
+請依照您實際的命名空間和類別名稱調整上述代碼範例。
+
+
+**方法二：使用DLL**
+   - 將本專案建置成DLL檔案，然後在你的應用程式中直接引用這個DLL。
 
 ## 如何解決找不到Dm插件的問題
 
