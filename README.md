@@ -54,6 +54,7 @@ Console.WriteLine("沒找到 圖片名稱");
 ```csharp
 while (true)
 {
+    // 持續找10秒鐘
     if (dm.FindPicR("圖片1"))
     {
         //時間內沒找到圖片
@@ -62,10 +63,10 @@ while (true)
         //重來
         continue;
     }
-    //找到了往下執行
+    // 找到了馬上往下執行
     Console.WriteLine("找到圖片1，執行下一步");
 
-    //通常執行點擊剛剛找到的圖片
+    // 通常執行點擊剛剛找到的圖片
     dm.MCS();
 
     break;
