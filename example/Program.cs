@@ -1,97 +1,87 @@
-﻿namespace example
+﻿using Dm.NET;
+
+namespace Example
 {
     internal class Program
     {
-        static void Main(string[] args)
+        private static void Main(string[] args)
         {
             DmService? dm = null;
             try
             {
-                //初始化dm時，可直接輸入視窗大小、圖片路徑、字典路徑、是否顯示錯誤訊息、
-                dm = new DmService(1920,1080);
+                //初始化dm時，輸入預設視窗大小，之後找圖就不用設定範圍
+                dm = new DmService(1920, 1080);
             }
-            catch (Exception e)
+            catch (Exception)
             {
+                //通常是被防毒刪除或沒有註冊
                 Console.WriteLine("dm初始化失敗，代表沒有註冊大漠");
-                Console.ReadKey();
+                Console.ReadLine();
             }
-            
 
-            int hwnd = dm.FindWindow("lpClassName", "lpWindowName"); //找窗口句炳
-            dm.BindWindow(hwnd); //輸入句柄並綁定
+            if (dm == null)
+            {
+                Console.WriteLine("未知原因");
+                Console.ReadLine();
+                return;
+            }
 
-            //注意，所有圖片都得是bmp，故找圖不需要再寫.bmp
+            #region 後台控制
+
+            //找窗口句炳
+            var hwnd = dm.FindWindow("視窗類名", "視窗名稱");
+            if (hwnd == 0)
+            {
+                Console.WriteLine("沒有找到視窗");
+                Console.ReadLine();
+                return;
+            }
+            //輸入句柄並綁定
+            dm.BindWindow(hwnd);
+
+            #endregion 後台控制
+
+            //設定圖片資料夾路徑、字典名稱
+            //dm.SetPath("圖片資料夾路徑"); // 不設定預設找Resource資料夾
+            //dm.SetDict("字典名稱"); // 不設定預設找dm_soft.txt
+
+            //注意，所有圖片副檔名都是bmp，故找圖不需要再寫副檔名
 
             //一般找圖
-            if (dm.FindPicB("圖片名稱"))
+            if (!dm.FindPicB("圖片1"))
             {
-                //找到了
-                Console.WriteLine("找到 圖片名稱");
-
-                // dm.MCS()為多載方法
-                dm.MCS(); // 滑鼠移動至圖片、點擊、休息2秒
-                dm.MCS(5); // 滑鼠移動至圖片、點擊、休息5秒
-
-                dm.MCS(100, 100); // 滑鼠移動至100,100、點擊、休息2秒
-                dm.MCS(100, 100, 5); // 滑鼠移動至100,100、點擊、休息5秒
+                Console.WriteLine("沒找到 圖片1");
+                Console.ReadLine();
+                return;
             }
-            //沒找到往下執行
-            Console.WriteLine("沒找到 圖片名稱");
+            //找到了
+            Console.WriteLine("找到 圖片1");
 
+            //滑鼠移動至圖片、點擊、休息2秒
+            dm.MCS();
 
-            while (true)
+            //滑鼠移動至圖片、點擊、休息5秒
+            //dm.MCS(5);
+
+            // 滑鼠移動至100,100、點擊、休息2秒
+            //dm.MCS(100, 100);
+
+            // 滑鼠移動至100,100、點擊、休息5秒
+            //dm.MCS(100, 100, 5);
+
+            // 隔一秒找一次圖片，預設時間找10秒
+            if (dm.NotFindPicR("圖片1"))
             {
-                //隔一秒找一次圖片
-                if (dm.FindPicR("圖片1"))
-                {
-                    //時間內沒找到圖片
-                    Console.WriteLine("沒找到 圖片1");
-
-                    //重來
-                    continue;
-                }
-                //找到了往下執行
-                Console.WriteLine("找到圖片1，執行下一步");
-
-                //通常執行點擊剛剛找到的圖片
-                dm.MCS();
-
-                //隔一秒找一次圖片
-                if (dm.FindPicR("圖片2"))
-                {
-                    //時間內沒找到圖片
-                    Console.WriteLine("沒找到 圖片2");
-
-                    //重來
-                    continue;
-                }
-                //找到了往下執行
-                Console.WriteLine("找到圖片2，執行下一步");
-
-                //通常執行點擊剛剛找到的圖片
-                dm.MCS();
-
-                break;
+                //時間內沒找到圖片
+                Console.WriteLine($"沒找到 圖片1");
+                Console.ReadLine();
+                return;
             }
-        }
+            //找到了往下執行
+            Console.WriteLine($"找到圖片1，執行下一步");
 
-        /// <summary>
-        /// 參數使用方法
-        /// </summary>
-        public void Func()
-        {
-            //找圖說明 FindPic可限定範圍 例如 FindPicB(100, 100, 200, 200, "圖片名稱")
-
-            // 參數使用方法
-            // 找圖方法的 traversal 設為true時候，會一次尋找"圖片名稱"、"圖片名稱1"、"圖片名稱2"等等
-            // 找圖要找多張bmp 以|分開 例如 "圖片名稱|圖片名稱1|圖片名稱2"
-            // 因此「traversal」與「bmp的|」使用方法為互斥，只能使用一個
-
-            // sim 設為0.9時候，會尋找相似度90%以上的圖片
-            // click 設為true時候，會點擊找到的圖片
-
-
-            // FindPicR 的 time為尋找時間，單位為秒，預設10秒
+            //滑鼠移動至圖片、點擊、休息2秒
+            dm.MCS();
         }
     }
 }
