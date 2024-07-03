@@ -1,5 +1,6 @@
 ﻿using Dm.NET.Helpers;
 using System.Diagnostics;
+using System.Runtime.Intrinsics.Arm;
 
 namespace Dm.NET
 {
@@ -8,25 +9,28 @@ namespace Dm.NET
     /// </summary>
     public class DmService
     {
-        private readonly int _width;
-        private readonly int _height;
-        private readonly int _sleepMilliseconds;
-        public readonly dmsoft dm;
+        private int _width;
+        private int _height;
+        private int _sleepMilliseconds;
+        public readonly dmsoft dm = new();
+        private double _ratio = 1;
 
-        public DmService(int Width = 960, int Height = 540, int sleepMilliseconds = 2000)
+        public DmService()
         {
-            dm = new dmsoft();
-            _height = Height;
-            _width = Width;
-            _sleepMilliseconds = sleepMilliseconds;
-
-            SetPath();
-            SetDict();
             if (!Debugger.IsAttached)
+
             {
                 // 關閉錯誤訊息
                 dm.SetShowErrorMsg(0);
             }
+        }
+
+        public void Init()
+        {
+            SetPath();
+            SetDict();
+            SetSize();
+            SetSleep();
         }
 
         #region 其他變數
@@ -42,6 +46,18 @@ namespace Dm.NET
 
         #region 視窗方法
 
+        public void MoveWindow(int hwnd0, int x, int y)
+        {
+            dm.MoveWindow(hwnd0, x, y);
+        }
+
+        public void SetWindowOnTop(int hwnd0)
+        {
+            dm.SetWindowState(hwnd0, 8);
+        }
+
+        private int hwnd;
+
         /// <summary>
         /// 綁定視窗
         /// </summary>
@@ -49,6 +65,7 @@ namespace Dm.NET
         /// <returns></returns>
         public bool BindWindow(int hwnd)
         {
+            this.hwnd = hwnd;
             return dm.BindWindow(hwnd, "gdi", "windows", "windows", 0) == 1;
         }
 
@@ -58,7 +75,7 @@ namespace Dm.NET
         /// <param name="lpClassName"></param>
         /// <param name="lpWindowName"></param>
         /// <returns></returns>
-        public int FindWindow(string lpClassName, string lpWindowName)
+        public static int FindWindow(string lpClassName, string lpWindowName)
         {
             return WindowHelper.FindWindow(lpClassName, lpWindowName);
         }
@@ -71,7 +88,7 @@ namespace Dm.NET
         /// <param name="lpClassName"></param>
         /// <param name="lpWindowName"></param>
         /// <returns></returns>
-        public int FindWindowEx(nint hwndParent, nint hwndChildAfter, string lpClassName, string lpWindowName)
+        public static int FindWindowEx(nint hwndParent, nint hwndChildAfter, string lpClassName, string lpWindowName)
         {
             return WindowHelper.FindWindowEx(hwndParent, hwndChildAfter, lpClassName, lpWindowName);
         }
@@ -111,17 +128,50 @@ namespace Dm.NET
             {
                 dictName = "dm_soft";
             }
-            var dictPath = Path.Combine(resourcesPath, dictName + ".txt");
+            var dictNameWithTxt = dictName + ".txt";
+            var dictPath = Path.Combine(resourcesPath, dictNameWithTxt);
             if (!File.Exists(dictPath))
             {
-                throw new Exception("字典不存在");
+                File.Create(dictPath);
             }
-            return dm.SetDict(0, Path.Combine(resourcesPath, dictPath)) == 1;
+            return dm.SetDict(0, dictPath) == 1;
+        }
+
+        public void SetSize(int Width = 960, int Height = 540)
+        {
+            _height = Height;
+            _width = Width;
+        }
+
+        public void SetSleep(int sleepMilliseconds = 2000)
+        {
+            _sleepMilliseconds = sleepMilliseconds;
+        }
+
+        public void SetRatio(double ratio)
+        {
+            _ratio = ratio;
         }
 
         #endregion 設定
 
         #region 其他方法
+
+        public void GetClientSize(int hwnd1, out object width, out object height)
+        {
+            dm.GetClientSize(hwnd1, out width, out height);
+        }
+
+        public void SendString(string str)
+        {
+            dm.SendString(hwnd, str);
+            Thread.Sleep(2000);
+        }
+
+        //public bool GetClientSize(int hwnd, out object width, out object height)
+        //{
+        //    return dm.GetClientSize(hwnd,) == 1;
+        //}
 
         /// <summary>
         /// 是否卡死
@@ -138,21 +188,26 @@ namespace Dm.NET
         /// </summary>
         /// <param name="bmp"></param>
         /// <param name="limit"></param>
-        public void Capture(string bmp, int limit = 100)
+        public string? Capture(string bmp, int limit = 100)
         {
             int index = 0;
-            var currentFile = bmp + ".bmp";
-            while (File.Exists(Path.Combine(resourcesPath, currentFile)))
+            var currentFile = $"{bmp}.bmp";
+            var filePath = Path.Combine(resourcesPath, currentFile);
+
+            while (File.Exists(filePath))
             {
                 index++;
+                if (index > limit)
+                {
+                    Console.WriteLine($"圖片超過{limit}張");
+                    return null;
+                }
                 currentFile = $"{bmp}{index}.bmp";
+                filePath = Path.Combine(resourcesPath, currentFile);
             }
-            if (index > limit)
-            {
-                Console.WriteLine($"圖片超過{limit}張");
-                return;
-            }
-            dm.Capture(0, 0, _width, _height, currentFile);
+
+            dm.Capture(0, 0, _width, _height, filePath);
+            return filePath;
         }
 
         /// <summary>
@@ -312,66 +367,102 @@ namespace Dm.NET
         #region 滑鼠
 
         /// <summary>
+        /// 滑動滑鼠
+        /// </summary>
+        /// <param name="x1"></param>
+        /// <param name="y1"></param>
+        /// <param name="x2"></param>
+        /// <param name="y2"></param>
+        public void Mdsmsrus(int x1, int y1, int x2, int y2)
+        {
+            int steps = 40;
+            float stepX = (float)(x2 - x1) / steps;
+            float stepY = (float)(y2 - y1) / steps;
+
+            MoveToInternal(x1, y1);   // 初始位置
+            dm.LeftDown();       // 按下左鍵
+            Thread.Sleep(50);
+
+            for (var i = 1; i <= steps; i++)
+            {
+                // 每次增加一定的步長
+                int nextX = (int)(x1 + stepX * i);
+                int nextY = (int)(y1 + stepY * i);
+                MoveToInternal(nextX, nextY);
+                Thread.Sleep(50);  // 暫停一下來模擬滑動
+            }
+
+            dm.LeftUp();         // 釋放左鍵
+            Thread.Sleep(_sleepMilliseconds);  // 完成後等待
+        }
+
+        /// <summary>
         /// 長按滑鼠
         /// </summary>
         /// <param name="intX"></param>
         /// <param name="intY"></param>
         /// <param name="sec"></param>
-        public void MDSU(int intX, int intY, int sec = 2)
+        public void Mdsus(int intX, int intY, int sec = 2)
         {
-            dm.MoveTo(intX + GetRandomNumberMove(), intY + GetRandomNumberMove());
+            MoveToInternal(intX + GetRandomNumberMove(), intY + GetRandomNumberMove());
             dm.LeftDown();
             Thread.Sleep(sec * 1000);
             dm.LeftUp();
+            Thread.Sleep(_sleepMilliseconds);
         }
 
-        public void MCS(int intX, int intY)
+        public void Mcs(int intX, int intY)
         {
-            dm.MoveTo(intX + GetRandomNumberMove(), intY + GetRandomNumberMove());
+            MoveToInternal(intX + GetRandomNumberMove(), intY + GetRandomNumberMove());
             dm.LeftClick();
             Thread.Sleep(_sleepMilliseconds);
         }
 
-        public void MCS(int intX, int intY, int sec = 2)
+        public void Mcs(int intX, int intY, int sec = 2)
         {
-            dm.MoveTo(intX + GetRandomNumberMove(), intY + GetRandomNumberMove());
+            MoveToInternal(intX + GetRandomNumberMove(), intY + GetRandomNumberMove());
             dm.LeftClick();
             Thread.Sleep(sec * 1000);
         }
 
-        public void MCS(int intX, int intY, double sec = 2.0)
+        public void Mcs(int intX, int intY, double sec = 2.0)
         {
-            dm.MoveTo(intX + GetRandomNumberMove(), intY + GetRandomNumberMove());
+            MoveToInternal(intX + GetRandomNumberMove(), intY + GetRandomNumberMove());
             dm.LeftClick();
             Thread.Sleep((int)(sec * 1000));
         }
 
-        public void MCSEx(int intXEx, int intYEx, int sec = 2)
+        public void McsEx(int intXEx, int intYEx, int sec = 2)
         {
-            dm.MoveTo(X + intXEx + GetRandomNumberMove(), Y + intYEx + GetRandomNumberMove());
+            MoveToInternal(X + intXEx + GetRandomNumberMove(), Y + intYEx + GetRandomNumberMove());
             dm.LeftClick();
             Thread.Sleep(sec * 1000);
         }
 
-        public void MCS()
+        public void Mcs()
         {
-            dm.MoveTo(X + GetRandomNumberMove(), Y + GetRandomNumberMove());
+            MoveToInternal(X + GetRandomNumberMove(), Y + GetRandomNumberMove());
             dm.LeftClick();
             Thread.Sleep(_sleepMilliseconds);
         }
 
-        public void MCS(int sec)
+        public void Mcs(int sec)
         {
-            dm.MoveTo(X + GetRandomNumberMove(), Y + GetRandomNumberMove());
+            MoveToInternal(X + GetRandomNumberMove(), Y + GetRandomNumberMove());
             dm.LeftClick();
             Thread.Sleep(sec * 1000);
         }
 
-        public void MCS(double sec)
+        public void Mcs(double sec)
         {
-            dm.MoveTo(X + GetRandomNumberMove(), Y + GetRandomNumberMove());
+            MoveToInternal(X + GetRandomNumberMove(), Y + GetRandomNumberMove());
             dm.LeftClick();
             Thread.Sleep((int)(sec * 1000));
+        }
+
+        public void MoveToInternal(int x, int y)
+        {
+            dm.MoveTo((int)(x * _ratio), (int)(y * _ratio));
         }
 
         private readonly Random random = new();
@@ -387,9 +478,9 @@ namespace Dm.NET
         /// <param name="intX"></param>
         /// <param name="intY"></param>
         /// <param name="sec"></param>
-        public void MCSAccurate(int intX, int intY, int sec = 2)
+        public void McsAccurate(int intX, int intY, int sec = 2)
         {
-            dm.MoveTo(intX, intY);
+            MoveToInternal(intX, intY);
             dm.LeftClick();
             Thread.Sleep(sec * 1000);
         }
