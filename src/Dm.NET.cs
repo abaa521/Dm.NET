@@ -1,6 +1,5 @@
 ﻿using Dm.NET.Helpers;
 using System.Diagnostics;
-using System.Runtime.Intrinsics.Arm;
 
 namespace Dm.NET
 {
@@ -274,12 +273,12 @@ namespace Dm.NET
             return dm.FindPic(0, 0, _width, _height, bmp, "000000", sim, 0, out intX, out intY);
         }
 
-        public bool NotFindPicR(string? bmps, int time = 10, double sim = 0.7, bool traversal = false)
+        public bool FindPicR(string? bmps, int time = 10, double sim = 0.7, bool traversal = false)
         {
             return FindPicRInternal(0, 0, _width, _height, bmps, time, sim, traversal);
         }
 
-        public bool NotFindPicR(int x1, int y1, int x2, int y2, string? bmps, int time = 10, double sim = 0.7, bool traversal = false)
+        public bool FindPicR(int x1, int y1, int x2, int y2, string? bmps, int time = 10, double sim = 0.7, bool traversal = false)
         {
             return FindPicRInternal(x1, y1, x2, y2, bmps, time, sim, traversal);
         }
@@ -293,12 +292,12 @@ namespace Dm.NET
             {
                 if (dm.FindPic(x1, y1, x2, y2, bmp, "000000", sim, 0, out intX, out intY) >= 0)
                 {
-                    return false;
+                    return true;
                 }
                 tmptime++;
                 if (tmptime > time)
                 {
-                    return true;
+                    return false;
                 }
 
                 Thread.Sleep(1000);
