@@ -1,5 +1,6 @@
 ﻿using Dm.NET.Helpers;
 using System.Diagnostics;
+using System.Text;
 
 namespace Dm.NET
 {
@@ -131,7 +132,12 @@ namespace Dm.NET
             var dictPath = Path.Combine(resourcesPath, dictNameWithTxt);
             if (!File.Exists(dictPath))
             {
-                File.Create(dictPath);
+                using (FileStream fs = File.Create(dictPath))
+                {
+                    // 這裡可以寫一些初始化的內容到檔案中
+                    byte[] info = new UTF8Encoding(true).GetBytes("1F0F7E00C00801805FF0$0$0.0.33$12\r\n");
+                    fs.Write(info, 0, info.Length);
+                }
             }
             return dm.SetDict(0, dictPath) == 1;
         }
@@ -238,70 +244,16 @@ namespace Dm.NET
 
         #region 圖片
 
-        public bool FindPicB(string bmps, double sim = 0.7, bool traversal = false)
+        private int FindPicOrigin(int x1, int y1, int x2, int y2, string? bmps, double sim, bool traversal)
         {
-            return FindPicBInternal(0, 0, _width, _height, bmps, sim, traversal);
-        }
-
-        public bool FindPicB(int x1, int y1, int x2, int y2, string bmps, double sim = 0.7, bool traversal = false)
-        {
-            return FindPicBInternal(x1, y1, x2, y2, bmps, sim, traversal);
-        }
-
-        private bool FindPicBInternal(int x1, int y1, int x2, int y2, string? bmps, double sim, bool traversal)
-        {
-            var bmp = ProcessBmpString(bmps, traversal);
-            var re = dm.FindPic(x1, y1, x2, y2, bmp, "000000", sim, 0, out intX, out intY) >= 0;
-            //if (re && click)
-            //{
-            //    MCS();
-            //}
-            return re;
-            //return FindPicRInternal(x10, y1, x2, y2, bmps, click, time, sim, traversal);
-        }
-
-        public int FindPic(int x1, int y1, int x2, int y2, string bmps, double sim = 0.7, bool traversal = false)
-        {
-            var bmp = ProcessBmpString(bmps, traversal);
-            return dm.FindPic(x1, y1, x2, y2, bmp, "000000", sim, 0, out intX, out intY);
-        }
-
-        public int FindPic(string bmps, double sim = 0.7, bool traversal = false)
-        {
-            var bmp = ProcessBmpString(bmps, traversal);
-
-            return dm.FindPic(0, 0, _width, _height, bmp, "000000", sim, 0, out intX, out intY);
-        }
-
-        public bool FindPicR(string? bmps, int time = 10, double sim = 0.7, bool traversal = false)
-        {
-            return FindPicRInternal(0, 0, _width, _height, bmps, time, sim, traversal);
-        }
-
-        public bool FindPicR(int x1, int y1, int x2, int y2, string? bmps, int time = 10, double sim = 0.7, bool traversal = false)
-        {
-            return FindPicRInternal(x1, y1, x2, y2, bmps, time, sim, traversal);
-        }
-
-        private bool FindPicRInternal(int x1, int y1, int x2, int y2, string? bmps, int time, double sim, bool traversal)
-        {
-            var bmp = ProcessBmpString(bmps, traversal);
-
-            var tmptime = 0;
-            while (true)
-            {
-                if (dm.FindPic(x1, y1, x2, y2, bmp, "000000", sim, 0, out intX, out intY) >= 0)
-                {
-                    return true;
-                }
-                tmptime++;
-                if (tmptime > time)
-                {
-                    return false;
-                }
-
-                Thread.Sleep(1000);
-            }
+            var bmpStr = ProcessBmpString(bmps, traversal);
+            x1--;
+            if (x1 < 0) x1 = 0;
+            y1--;
+            if (y1 < 0) y1 = 0;
+            x2++;
+            y2++;
+            return dm.FindPic(x1, y1, x2, y2, bmpStr, "000000", sim, 0, out intX, out intY);
         }
 
         private string ProcessBmpString(string? bmps, bool traversal)
@@ -360,6 +312,73 @@ namespace Dm.NET
 
             return string.Join("|", filenames);
         }
+
+        #region picB
+
+        public bool FindPicB(string bmps, double sim = 0.7, bool traversal = false)
+        {
+            return FindPicBInternal(0, 0, _width, _height, bmps, sim, traversal);
+        }
+
+        public bool FindPicB(int x1, int y1, int x2, int y2, string bmps, double sim = 0.7, bool traversal = false)
+        {
+            return FindPicBInternal(x1, y1, x2, y2, bmps, sim, traversal);
+        }
+
+        private bool FindPicBInternal(int x1, int y1, int x2, int y2, string? bmps, double sim, bool traversal)
+        {
+            return FindPicOrigin(x1, y1, x2, y2, bmps, sim, traversal) >= 0;
+        }
+
+        #endregion picB
+
+        #region Pic
+
+        public int FindPic(int x1, int y1, int x2, int y2, string bmps, double sim = 0.7, bool traversal = false)
+        {
+            return FindPicOrigin(x1, y1, x2, y2, bmps, sim, traversal);
+        }
+
+        public int FindPic(string bmps, double sim = 0.7, bool traversal = false)
+        {
+            return FindPicOrigin(0, 0, _width, _height, bmps, sim, traversal);
+        }
+
+        #endregion Pic
+
+        #region PicR
+
+        public bool FindPicR(string? bmps, int times = 10, double sim = 0.7, bool traversal = false)
+        {
+            return FindPicRInternal(0, 0, _width, _height, bmps, times, sim, traversal);
+        }
+
+        public bool FindPicR(int x1, int y1, int x2, int y2, string? bmps, int times = 10, double sim = 0.7, bool traversal = false)
+        {
+            return FindPicRInternal(x1, y1, x2, y2, bmps, times, sim, traversal);
+        }
+
+        private bool FindPicRInternal(int x1, int y1, int x2, int y2, string? bmps, int times, double sim, bool traversal)
+        {
+            var bmpStr = ProcessBmpString(bmps, traversal);
+            var tmptime = 0;
+            while (true)
+            {
+                if (dm.FindPic(x1, y1, x2, y2, bmpStr, "000000", sim, 0, out intX, out intY) >= 0)
+                {
+                    return true;
+                }
+                tmptime++;
+                if (tmptime > times)
+                {
+                    return false;
+                }
+
+                Thread.Sleep(1000);
+            }
+        }
+
+        #endregion PicR
 
         #endregion 圖片
 
