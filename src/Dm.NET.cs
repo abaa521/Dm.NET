@@ -1,5 +1,6 @@
 ﻿using Dm.NET.Helpers;
 using System.Diagnostics;
+using System.IO;
 using System.Text;
 
 namespace Dm.NET
@@ -258,10 +259,7 @@ namespace Dm.NET
 
         private string ProcessBmpString(string? bmps, bool traversal)
         {
-            if (string.IsNullOrEmpty(bmps))
-            {
-                throw new Exception("bmps IsNullOrEmpty");
-            }
+            ArgumentNullException.ThrowIfNull(bmps);
 
             if (traversal && bmps.Contains('|'))
             {
