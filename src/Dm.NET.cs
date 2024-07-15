@@ -245,15 +245,14 @@ namespace Dm.NET
 
         #region 圖片
 
-        private int FindPicOrigin(int x1, int y1, int x2, int y2, string? bmps, double sim, bool traversal)
+        private int FindPicOrigin(int x1, int y1, int x2, int y2, string? bmpStr, double sim, bool traversal)
         {
-            var bmpStr = ProcessBmpString(bmps, traversal);
-            x1--;
-            if (x1 < 0) x1 = 0;
-            y1--;
-            if (y1 < 0) y1 = 0;
-            x2++;
-            y2++;
+            x1 = Math.Max(0, x1 - 1);
+            y1 = Math.Max(0, y1 - 1);
+
+            x2 = Math.Min(x2 + 1, _width);
+            y2 = Math.Min(y2 + 1, _height);
+
             return dm.FindPic(x1, y1, x2, y2, bmpStr, "000000", sim, 0, out intX, out intY);
         }
 
@@ -325,7 +324,8 @@ namespace Dm.NET
 
         private bool FindPicBInternal(int x1, int y1, int x2, int y2, string? bmps, double sim, bool traversal)
         {
-            return FindPicOrigin(x1, y1, x2, y2, bmps, sim, traversal) >= 0;
+            var bmpStr = ProcessBmpString(bmps, traversal);
+            return FindPicOrigin(x1, y1, x2, y2, bmpStr, sim, traversal) >= 0;
         }
 
         #endregion picB
@@ -359,6 +359,7 @@ namespace Dm.NET
         private bool FindPicRInternal(int x1, int y1, int x2, int y2, string? bmps, int times, double sim, bool traversal)
         {
             var bmpStr = ProcessBmpString(bmps, traversal);
+
             var tmptime = 0;
             while (true)
             {
@@ -366,7 +367,7 @@ namespace Dm.NET
                 if (tmptime > times)
                     return false;
 
-                if (dm.FindPic(x1, y1, x2, y2, bmpStr, "000000", sim, 0, out intX, out intY) >= 0)
+                if (FindPicOrigin(x1, y1, x2, y2, bmpStr, sim, traversal) >= 0)
                     return true;
 
                 Thread.Sleep(1000);
