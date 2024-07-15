@@ -362,15 +362,12 @@ namespace Dm.NET
             var tmptime = 0;
             while (true)
             {
-                if (dm.FindPic(x1, y1, x2, y2, bmpStr, "000000", sim, 0, out intX, out intY) >= 0)
-                {
-                    return true;
-                }
                 tmptime++;
                 if (tmptime > times)
-                {
                     return false;
-                }
+
+                if (dm.FindPic(x1, y1, x2, y2, bmpStr, "000000", sim, 0, out intX, out intY) >= 0)
+                    return true;
 
                 Thread.Sleep(1000);
             }
