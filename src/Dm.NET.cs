@@ -29,7 +29,7 @@ namespace Dm.NET
         public void Init()
         {
             SetPath();
-            SetDict();
+            //SetDict();
             SetSize();
             SetSleep();
         }
@@ -339,12 +339,18 @@ namespace Dm.NET
 
         public int FindPic(int x1, int y1, int x2, int y2, string bmps, double sim = 0.7, bool traversal = false)
         {
-            return FindPicOrigin(x1, y1, x2, y2, bmps, sim, traversal);
+            return FindPicInternal(x1, y1, x2, y2, bmps, sim, traversal);
         }
 
         public int FindPic(string bmps, double sim = 0.7, bool traversal = false)
         {
-            return FindPicOrigin(0, 0, _width, _height, bmps, sim, traversal);
+            return FindPicInternal(0, 0, _width, _height, bmps, sim, traversal);
+        }
+
+        private int FindPicInternal(int x1, int y1, int x2, int y2, string? bmps, double sim, bool traversal)
+        {
+            var bmpStr = ProcessBmpString(bmps, traversal);
+            return FindPicOrigin(x1, y1, x2, y2, bmpStr, sim, traversal);
         }
 
         #endregion Pic
@@ -365,11 +371,11 @@ namespace Dm.NET
         {
             var bmpStr = ProcessBmpString(bmps, traversal);
 
-            var tmptime = 0;
+            var currentTimes = 0;
             while (true)
             {
-                tmptime++;
-                if (tmptime > times)
+                currentTimes++;
+                if (currentTimes > times)
                     return false;
 
                 if (FindPicOrigin(x1, y1, x2, y2, bmpStr, sim, traversal) >= 0)
@@ -382,6 +388,22 @@ namespace Dm.NET
         #endregion PicR
 
         #endregion 圖片
+
+        public bool FindR(bool result, int times = 10)
+        {
+            var currentTimes = 0;
+            while (true)
+            {
+                currentTimes++;
+                if (currentTimes > times)
+                    return false;
+
+                if (result)
+                    return true;
+
+                Thread.Sleep(1000);
+            }
+        }
 
         #region 滑鼠
 
