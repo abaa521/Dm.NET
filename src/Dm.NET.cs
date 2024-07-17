@@ -8,7 +8,7 @@ namespace Dm.NET
     /// <summary>
     /// 大漠服務
     /// </summary>
-    public class DmService
+    public class DmService : IDisposable
     {
         private int _width;
         private int _height;
@@ -67,7 +67,12 @@ namespace Dm.NET
         public bool BindWindow(int hwnd)
         {
             this.hwnd = hwnd;
-            return dm.BindWindow(hwnd, "gdi", "windows", "windows", 0) == 1;
+            var result = dm.BindWindow(hwnd, "gdi", "windows", "windows", 0) == 1;
+
+            if (result)
+                Thread.Sleep(1000);
+
+            return result;
         }
 
         /// <summary>
@@ -497,6 +502,36 @@ namespace Dm.NET
             MoveToInternal(intX, intY);
             dm.LeftClick();
             Thread.Sleep(sec * 1000);
+        }
+
+        private bool disposed = false; // To detect redundant calls
+
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (disposed)
+                return;
+
+            if (disposing)
+            {
+                // 釋放受控資源
+
+                dm.UnBindWindow();
+            }
+
+            // 釋放非受控資源（如果有）
+
+            disposed = true;
+        }
+
+        ~DmService()
+        {
+            Dispose(false);
         }
 
         #endregion 滑鼠
