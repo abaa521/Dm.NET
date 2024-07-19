@@ -36,7 +36,6 @@ namespace Dm.NET
 
         #region 其他變數
 
-        public int re = -1;
         public object intX = -1;
         public object intY = -1;
         public int X => (int)intX;
