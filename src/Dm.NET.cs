@@ -13,16 +13,17 @@ namespace Dm.NET
         private int _width;
         private int _height;
         private int _sleepMilliseconds;
-        public readonly dmsoft dm = new();
-        private double _ratio = 1;
+        private string resourcesPath = string.Empty;
+        private double _ratio;
+
+        public dmsoft Dm { get; } = new();
 
         public DmService()
         {
             if (!Debugger.IsAttached)
-
             {
                 // 關閉錯誤訊息
-                dm.SetShowErrorMsg(0);
+                Dm.SetShowErrorMsg(0);
             }
         }
 
@@ -32,15 +33,17 @@ namespace Dm.NET
             //SetDict();
             SetSize();
             SetSleep();
+            SetRatio();
         }
 
         #region 其他變數
 
-        public object intX = -1;
-        public object intY = -1;
-        public int X => (int)intX;
-        public int Y => (int)intY;
-        private string resourcesPath = string.Empty;
+        private object intX = -1;
+        private object intY = -1;
+        private int X => (int)intX;
+        private int Y => (int)intY;
+
+        private Dictionary<string, List<string>> bmpWithBmpListDict = [];
 
         #endregion 其他變數
 
@@ -48,12 +51,12 @@ namespace Dm.NET
 
         public void MoveWindow(int hwnd0, int x, int y)
         {
-            dm.MoveWindow(hwnd0, x, y);
+            Dm.MoveWindow(hwnd0, x, y);
         }
 
         public void SetWindowOnTop(int hwnd0)
         {
-            dm.SetWindowState(hwnd0, 8);
+            Dm.SetWindowState(hwnd0, 8);
         }
 
         private int hwnd;
@@ -63,12 +66,12 @@ namespace Dm.NET
         /// </summary>
         /// <param name="hwnd"></param>
         /// <returns></returns>
-        public bool BindWindow(int hwnd)
+        public bool BindWindow(int hwnd, bool sleep = true)
         {
             this.hwnd = hwnd;
-            var result = dm.BindWindow(hwnd, "gdi", "windows", "windows", 0) == 1;
+            var result = Dm.BindWindow(hwnd, "gdi", "windows", "windows", 0) == 1;
 
-            if (result)
+            if (result && sleep)
                 Thread.Sleep(1000);
 
             return result;
@@ -120,7 +123,7 @@ namespace Dm.NET
             Directory.CreateDirectory(path);
 
             resourcesPath = path;
-            return dm.SetPath(resourcesPath) == 1;
+            return Dm.SetPath(resourcesPath) == 1;
         }
 
         /// <summary>
@@ -144,7 +147,7 @@ namespace Dm.NET
                     fs.Write(info, 0, info.Length);
                 }
             }
-            return dm.SetDict(0, dictPath) == 1;
+            return Dm.SetDict(0, dictPath) == 1;
         }
 
         public void SetSize(int Width = 960, int Height = 540)
@@ -158,7 +161,7 @@ namespace Dm.NET
             _sleepMilliseconds = sleepMilliseconds;
         }
 
-        public void SetRatio(double ratio)
+        public void SetRatio(double ratio = 1)
         {
             _ratio = ratio;
         }
@@ -169,12 +172,12 @@ namespace Dm.NET
 
         public void GetClientSize(int hwnd1, out object width, out object height)
         {
-            dm.GetClientSize(hwnd1, out width, out height);
+            Dm.GetClientSize(hwnd1, out width, out height);
         }
 
         public void SendString(string str)
         {
-            dm.SendString(hwnd, str);
+            Dm.SendString(hwnd, str);
             Thread.Sleep(2000);
         }
 
@@ -190,7 +193,7 @@ namespace Dm.NET
         /// <returns></returns>
         public bool IsDisplayDead(int sec = 5)
         {
-            return dm.IsDisplayDead(0, 0, _width, _height, sec) == 1;
+            return Dm.IsDisplayDead(0, 0, _width, _height, sec) == 1;
         }
 
         /// <summary>
@@ -201,7 +204,7 @@ namespace Dm.NET
         public string? Capture(string bmp, int limit = 100)
         {
             int index = 0;
-            var currentFile = $"{bmp}.bmp";
+            var currentFile = $"{bmp}.bmpStr";
             var filePath = Path.Combine(resourcesPath, currentFile);
 
             while (File.Exists(filePath))
@@ -212,11 +215,11 @@ namespace Dm.NET
                     Console.WriteLine($"圖片超過{limit}張");
                     return null;
                 }
-                currentFile = $"{bmp}{index}.bmp";
+                currentFile = $"{bmp}{index}.bmpStr";
                 filePath = Path.Combine(resourcesPath, currentFile);
             }
 
-            dm.Capture(0, 0, _width, _height, filePath);
+            Dm.Capture(0, 0, _width, _height, filePath);
             return filePath;
         }
 
@@ -228,7 +231,7 @@ namespace Dm.NET
         /// <returns></returns>
         public string GetColor(int x, int y)
         {
-            return dm.GetColor(x, y);
+            return Dm.GetColor(x, y);
         }
 
         #endregion 其他方法
@@ -237,19 +240,19 @@ namespace Dm.NET
 
         public bool FindStrB(string str, string colors, double sim = 0.7)
         {
-            return dm.FindStr(0, 0, _width, _height, str, colors, sim, out intX, out intY) >= 0;
+            return Dm.FindStr(0, 0, _width, _height, str, colors, sim, out intX, out intY) >= 0;
         }
 
         public bool FindStrB(int x1, int y1, int x2, int y2, string str, string colors, double sim = 0.7)
         {
-            return dm.FindStr(x1, y1, x2, y2, str, colors, sim, out intX, out intY) >= 0;
+            return Dm.FindStr(x1, y1, x2, y2, str, colors, sim, out intX, out intY) >= 0;
         }
 
         #endregion 文字
 
         #region 圖片
 
-        private int FindPicOrigin(int x1, int y1, int x2, int y2, string? bmpStr, double sim, bool traversal)
+        private int FindPicOrigin(int x1, int y1, int x2, int y2, string? bmpStr, double sim)
         {
             x1 = Math.Max(0, x1 - 1);
             y1 = Math.Max(0, y1 - 1);
@@ -257,118 +260,126 @@ namespace Dm.NET
             x2 = Math.Min(x2 + 1, _width);
             y2 = Math.Min(y2 + 1, _height);
 
-            return dm.FindPic(x1, y1, x2, y2, bmpStr, "000000", sim, 0, out intX, out intY);
+            return Dm.FindPic(x1, y1, x2, y2, bmpStr, "000000", sim, 0, out intX, out intY);
         }
 
-        private string ProcessBmpString(string? bmps, bool traversal)
+        private string ProcessBmpQuery(string? bmpQuery)
         {
-            ArgumentNullException.ThrowIfNull(bmps);
+            ArgumentException.ThrowIfNullOrEmpty(bmpQuery);
 
-            if (traversal && bmps.Contains('|'))
+            if (bmpQuery.Contains(".bmp"))
             {
-                throw new Exception(bmps + " 圖片判斷錯誤: 多張遍歷");
+                bmpQuery = bmpQuery.Replace(".bmp", "");
+                Console.WriteLine(bmpQuery + "包含bmp");
             }
 
-            if (bmps.Contains(".bmp"))
-            {
-                bmps = bmps.Replace(".bmp", "");
-                Console.WriteLine(bmps + "包含bmp");
-            }
+            string bmpStr;
+            var Querys = bmpQuery.Split("|");
+            List<string> bmpResult = [];
 
-            string? bmp;
-            if (traversal)
+            foreach (var query in Querys)
             {
-                bmp = Traversal(bmps);
-            }
-            else if (bmps.Contains('|'))
-            {
-                var tmp = bmps.Split("|");
-                for (int i = 0; i < tmp.Length; i++)
+                if (query.EndsWith('*'))
                 {
-                    tmp[i] += ".bmp";
+                    var bmp = query.TrimEnd('*');
+                    if (!bmpWithBmpListDict.TryGetValue(bmp, out List<string>? bmpList))
+                    {
+                        bmpList = Traversal(bmp);
+                        bmpWithBmpListDict[bmp] = bmpList;
+                    }
+                    bmpResult.AddRange(bmpList);
                 }
+                else
+                {
+                    var bmp = query;
+                    bmpResult.Add(bmp);
+                }
+            }
 
-                bmp = string.Join('|', tmp);
-            }
-            else
+            for (int i = 0; i < bmpResult.Count; i++)
             {
-                bmp = bmps + ".bmp";
+                bmpResult[i] += ".bmp";
             }
-            return bmp;
+
+            bmpStr = string.Join('|', bmpResult);
+
+            return bmpStr;
         }
 
-        private string Traversal(string baseFilename)
+        private List<string> Traversal(string FilenameWithoutExtension)
         {
-            List<string> filenames = [];
-            //string basePath = AppDomain.CurrentDomain.BaseDirectory;
-
+            List<string> fileNamesWithoutExtension = new List<string>();
             int index = 0;
-            string currentFile = baseFilename + ".bmp";
-            while (File.Exists(Path.Combine(resourcesPath, currentFile)))
-            {
-                filenames.Add(currentFile);
-                index++;
-                currentFile = $"{baseFilename}{index}.bmp";
-            }
+            string currentFile;
 
-            return string.Join("|", filenames);
+            do
+            {
+                currentFile = index == 0 ? $"{FilenameWithoutExtension}.bmp" : $"{FilenameWithoutExtension}{index}.bmp";
+                if (File.Exists(Path.Combine(resourcesPath, currentFile)))
+                {
+                    fileNamesWithoutExtension.Add(index == 0 ? FilenameWithoutExtension : $"{FilenameWithoutExtension}{index}");
+                    index++;
+                }
+            } while (File.Exists(Path.Combine(resourcesPath, currentFile)));
+
+            return fileNamesWithoutExtension;
         }
 
         #region picB
 
-        public bool FindPicB(string bmps, double sim = 0.7, bool traversal = false)
+        public bool FindPicB(string? bmpQuery, double sim = 0.7)
         {
-            return FindPicBInternal(0, 0, _width, _height, bmps, sim, traversal);
+            return FindPicBInternal(0, 0, _width, _height, bmpQuery, sim);
         }
 
-        public bool FindPicB(int x1, int y1, int x2, int y2, string bmps, double sim = 0.7, bool traversal = false)
+        public bool FindPicB(int x1, int y1, int x2, int y2, string? bmpQuery, double sim = 0.7)
         {
-            return FindPicBInternal(x1, y1, x2, y2, bmps, sim, traversal);
+            return FindPicBInternal(x1, y1, x2, y2, bmpQuery, sim);
         }
 
-        private bool FindPicBInternal(int x1, int y1, int x2, int y2, string? bmps, double sim, bool traversal)
+        private bool FindPicBInternal(int x1, int y1, int x2, int y2, string? bmpQuery, double sim)
         {
-            var bmpStr = ProcessBmpString(bmps, traversal);
-            return FindPicOrigin(x1, y1, x2, y2, bmpStr, sim, traversal) >= 0;
+            var bmpStr = ProcessBmpQuery(bmpQuery);
+            return FindPicOrigin(x1, y1, x2, y2, bmpStr, sim) >= 0;
         }
 
         #endregion picB
 
         #region Pic
 
-        public int FindPic(int x1, int y1, int x2, int y2, string bmps, double sim = 0.7, bool traversal = false)
+        public int FindPic(int x1, int y1, int x2, int y2, string? bmpQuery, double sim = 0.7)
         {
-            return FindPicInternal(x1, y1, x2, y2, bmps, sim, traversal);
+            return FindPicInternal(x1, y1, x2, y2, bmpQuery, sim);
         }
 
-        public int FindPic(string bmps, double sim = 0.7, bool traversal = false)
+        public int FindPic(string? bmpQuery, double sim = 0.7)
         {
-            return FindPicInternal(0, 0, _width, _height, bmps, sim, traversal);
+            return FindPicInternal(0, 0, _width, _height, bmpQuery, sim);
         }
 
-        private int FindPicInternal(int x1, int y1, int x2, int y2, string? bmps, double sim, bool traversal)
+        private int FindPicInternal(int x1, int y1, int x2, int y2, string? bmpQuery, double sim)
         {
-            var bmpStr = ProcessBmpString(bmps, traversal);
-            return FindPicOrigin(x1, y1, x2, y2, bmpStr, sim, traversal);
+            var bmpStr = ProcessBmpQuery(bmpQuery);
+            return FindPicOrigin(x1, y1, x2, y2, bmpStr, sim);
         }
 
         #endregion Pic
 
         #region PicR
 
-        public bool FindPicR(string? bmps, int times = 10, double sim = 0.7, bool traversal = false)
+        public bool FindPicR(string? bmps, int times = 10, double sim = 0.7)
         {
-            return FindPicRInternal(0, 0, _width, _height, bmps, times, sim, traversal);
+            return FindPicRInternal(0, 0, _width, _height, bmps, times, sim);
         }
 
-        public bool FindPicR(int x1, int y1, int x2, int y2, string? bmps, int times = 10, double sim = 0.7, bool traversal = false)
+        public bool FindPicR(int x1, int y1, int x2, int y2, string? bmps, int times = 10, double sim = 0.7)
         {
-            return FindPicRInternal(x1, y1, x2, y2, bmps, times, sim, traversal);
+            return FindPicRInternal(x1, y1, x2, y2, bmps, times, sim);
         }
 
-        private bool FindPicRInternal(int x1, int y1, int x2, int y2, string? bmps, int times, double sim, bool traversal)
+        private bool FindPicRInternal(int x1, int y1, int x2, int y2, string? bmpQuery, int times, double sim)
         {
-            var bmpStr = ProcessBmpString(bmps, traversal);
+            var bmpStr = ProcessBmpQuery(bmpQuery);
 
             var currentTimes = 0;
             while (true)
@@ -377,7 +388,7 @@ namespace Dm.NET
                 if (currentTimes > times)
                     return false;
 
-                if (FindPicOrigin(x1, y1, x2, y2, bmpStr, sim, traversal) >= 0)
+                if (FindPicOrigin(x1, y1, x2, y2, bmpStr, sim) >= 0)
                     return true;
 
                 Thread.Sleep(1000);
@@ -419,8 +430,8 @@ namespace Dm.NET
             float stepX = (float)(x2 - x1) / steps;
             float stepY = (float)(y2 - y1) / steps;
 
-            MoveToInternal(x1, y1);   // 初始位置
-            dm.LeftDown();       // 按下左鍵
+            MoveToInternal(x1, y1, false);   // 初始位置
+            Dm.LeftDown();       // 按下左鍵
             Thread.Sleep(50);
 
             for (var i = 1; i <= steps; i++)
@@ -428,11 +439,11 @@ namespace Dm.NET
                 // 每次增加一定的步長
                 int nextX = (int)(x1 + stepX * i);
                 int nextY = (int)(y1 + stepY * i);
-                MoveToInternal(nextX, nextY);
+                MoveToInternal(nextX, nextY, false);
                 Thread.Sleep(50);  // 暫停一下來模擬滑動
             }
 
-            dm.LeftUp();         // 釋放左鍵
+            Dm.LeftUp();         // 釋放左鍵
             Thread.Sleep(_sleepMilliseconds);  // 完成後等待
         }
 
@@ -444,72 +455,72 @@ namespace Dm.NET
         /// <param name="sec"></param>
         public void Mdsus(int intX, int intY, int sec = 2)
         {
-            MoveToInternal(intX + GetRandomNumberMove(), intY + GetRandomNumberMove());
-            dm.LeftDown();
+            MoveToInternal(intX, intY);
+            Dm.LeftDown();
             Thread.Sleep(sec * 1000);
-            dm.LeftUp();
+            Dm.LeftUp();
             Thread.Sleep(_sleepMilliseconds);
         }
 
         public void Mcs(int intX, int intY)
         {
-            MoveToInternal(intX + GetRandomNumberMove(), intY + GetRandomNumberMove());
-            dm.LeftClick();
+            MoveToInternal(intX, intY);
+            Dm.LeftClick();
             Thread.Sleep(_sleepMilliseconds);
         }
 
         public void Mcs(int intX, int intY, int sec = 2)
         {
-            MoveToInternal(intX + GetRandomNumberMove(), intY + GetRandomNumberMove());
-            dm.LeftClick();
+            MoveToInternal(intX, intY);
+            Dm.LeftClick();
             Thread.Sleep(sec * 1000);
         }
 
         public void Mcs(int intX, int intY, double sec = 2.0)
         {
-            MoveToInternal(intX + GetRandomNumberMove(), intY + GetRandomNumberMove());
-            dm.LeftClick();
+            MoveToInternal(intX, intY);
+            Dm.LeftClick();
             Thread.Sleep((int)(sec * 1000));
         }
 
         public void McsEx(int intXEx, int intYEx, int sec = 2)
         {
-            MoveToInternal(X + intXEx + GetRandomNumberMove(), Y + intYEx + GetRandomNumberMove());
-            dm.LeftClick();
+            MoveToInternal(X + intXEx, Y + intYEx);
+            Dm.LeftClick();
             Thread.Sleep(sec * 1000);
         }
 
         public void Mcs()
         {
-            MoveToInternal(X + GetRandomNumberMove(), Y + GetRandomNumberMove());
-            dm.LeftClick();
+            MoveToInternal(X, Y);
+            Dm.LeftClick();
             Thread.Sleep(_sleepMilliseconds);
         }
 
         public void Mcs(int sec)
         {
-            MoveToInternal(X + GetRandomNumberMove(), Y + GetRandomNumberMove());
-            dm.LeftClick();
+            MoveToInternal(X, Y);
+            Dm.LeftClick();
             Thread.Sleep(sec * 1000);
         }
 
         public void Mcs(double sec)
         {
-            MoveToInternal(X + GetRandomNumberMove(), Y + GetRandomNumberMove());
-            dm.LeftClick();
+            MoveToInternal(X, Y);
+            Dm.LeftClick();
             Thread.Sleep((int)(sec * 1000));
         }
 
-        public void MoveToInternal(int x, int y)
+        public void MoveToInternal(int x, int y, bool random = true)
         {
-            dm.MoveTo((int)(x * _ratio), (int)(y * _ratio));
-        }
-
-        private readonly Random random = new();
-
-        private int GetRandomNumberMove()
-        {
-            return random.Next(0, 6); // 返回0到5的隨機整數
+            if (random)
+            {
+                Dm.MoveTo((int)(x * _ratio) + RandomHelper.GetRandomNumberMove(), (int)(y * _ratio + RandomHelper.GetRandomNumberMove()));
+            }
+            else
+            {
+                Dm.MoveTo((int)(x * _ratio), (int)(y * _ratio));
+            }
         }
 
         /// <summary>
@@ -521,7 +532,7 @@ namespace Dm.NET
         public void McsAccurate(int intX, int intY, int sec = 2)
         {
             MoveToInternal(intX, intY);
-            dm.LeftClick();
+            Dm.LeftClick();
             Thread.Sleep(sec * 1000);
         }
 
@@ -542,7 +553,7 @@ namespace Dm.NET
             {
                 // 釋放受控資源
 
-                dm.UnBindWindow();
+                Dm.UnBindWindow();
             }
 
             // 釋放非受控資源（如果有）
