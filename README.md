@@ -15,79 +15,80 @@
 
 # 初始化
 ```csharp
-DmService? dm = null;
+DmService? myDm = null;
 try
 {
-    //初始化dm時，輸入預設視窗大小，之後找圖就不用設定範圍
-    dm = new DmService(1920, 1080);
+    // 初始化dm
+    myDm = new DmService();
+    myDm.Init(); //預設初始化
+
+    // 更改初始化設定
+    myDm.SetSize(1920,1080); // 輸入預設視窗大小，之後找圖就不用設定範圍
+    myDm.SetPath(); // 輸入預設圖片位置
+    myDm.SetDict(); // 輸入預設字典位置
+    myDm.SetSleep(); // 輸入預設休息時間
 }
 catch (Exception)
 {
-    //通常是被防毒刪除或沒有註冊
-    Console.WriteLine("dm初始化失敗，代表沒有註冊大漠");
+    // 通常是被防毒刪除或沒有註冊
+    Console.WriteLine("MyDm初始化失敗，代表沒有註冊大漠");
     Console.ReadLine();
 }
 ```
 # 後臺控制
 ```csharp
 //找窗口句炳
-var hwnd = dm.FindWindow("視窗類名", "視窗名稱");
+var hwnd = DmService.FindWindow("視窗類名", "視窗名稱"); // 改成原生方法，比大漠快
 //輸入句柄並綁定
-dm.BindWindow(hwnd);
+myDm.BindWindow(hwnd);
 ```
 # 找圖
 - 注意，所有圖片副檔名都是bmp，故找圖不需要再寫副檔名
 ## 一般找圖
 ```csharp
 //一般找圖
-if (!dm.FindPicB("圖片1"))
+if (myDm.FindPicB("圖片1"))
 {
-    Console.WriteLine("沒找到 圖片1");
-    Console.ReadLine();
-    return;
+    //找到了
+    Console.WriteLine("找到 圖片1");
+    
+    //滑鼠移動至圖片1、點擊、休息2秒
+    myDm.Mcs();
+    
+    //滑鼠移動至圖片1、點擊、休息5秒
+    //myDm.Mcs(5);
+    
+    // 滑鼠移動至100,100、點擊、休息2秒
+    //myDm.Mcs(100, 100);
+    
+    // 滑鼠移動至100,100、點擊、休息5秒
+    //myDm.Mcs(100, 100, 5);
 }
-//找到了
-Console.WriteLine("找到 圖片1");
-
-//滑鼠移動至圖片、點擊、休息2秒
-dm.Mcs();
-
-//滑鼠移動至圖片、點擊、休息5秒
-//dm.Mcs(5);
-
-// 滑鼠移動至100,100、點擊、休息2秒
-//dm.Mcs(100, 100);
-
-// 滑鼠移動至100,100、點擊、休息5秒
-//dm.Mcs(100, 100, 5);
 ```
 ## 持續找圖
 ```csharp
 // 隔一秒找一次圖片，預設時間找10秒
-if (dm.NotFindPicR("圖片1"))
+if (!MyDm.FindPicR("圖片1"))
 {
-    //時間內沒找到圖片
+    // 時間內沒找到圖片
     Console.WriteLine($"沒找到 圖片1");
-    Console.ReadLine();
     return;
 }
-//找到了往下執行
+// 找到了往下執行
 Console.WriteLine($"找到圖片1，執行下一步");
 
-//滑鼠移動至圖片、點擊、休息2秒
+//滑鼠移動至圖片1、點擊、休息2秒
 dm.Mcs();
 ```
-## 參數說明
-### 找圖
-- 找圖說明 FindPic可限定範圍 例如 FindPicB(100, 100, 200, 200, "圖片名稱")
-- NotFindPicR 的 time為尋找時間，單位為秒，預設10秒
-  
-### 找多圖
-- 找圖方法的參數 traversal 設為true時候，會一次尋找 "圖片名稱"、"圖片名稱1"、"圖片名稱2"等等，持續往上加，直到沒有此張圖片
-- 找圖要找多張圖片 以|分開 例如 "圖片A|圖片名E|圖片X"
-- 因此「traversal」與「bmp的|」，不能同時使用
-### 其他
-- sim 設為0.9時候，會尋找相似度90%以上的圖片，同大漠
+### 找圖參數 說明
+- 位置參數(x1,y1,x2,y2) 皆可限定範圍 例如 FindPicB(100, 100, 200, 200, "圖片名稱")
+- 圖片參數(bmpQuery)，如果設定"圖片名稱*"，會一次尋找 "圖片名稱"、"圖片名稱1"、"圖片名稱2"等等，直到沒有此張圖片
+- 相似參數(sim)，設為0.9時候，會尋找相似度90%以上的圖片，同大漠
+- 圖片參數(times)，設為30時候，只能在findPicR使用，超過30秒返回false
+- 找圖要找多張圖片 以|分開 例如 "圖片A|圖片E*|圖片X"
+- 
+## 其他說明
+- Mcs方法已經自動加上隨機偏移(1-5)
 
 ## 使用方法
 
@@ -112,8 +113,6 @@ dm.Mcs();
      ```csharp
      using Dm.NET; // 請替換為實際的命名空間。
      ```
-
-
 
 ## 如何解決找不到Dm插件的問題
 
