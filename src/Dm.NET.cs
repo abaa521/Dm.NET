@@ -204,7 +204,7 @@ namespace Dm.NET
         public string? Capture(string bmp, int limit = 100)
         {
             int index = 0;
-            var currentFile = $"{bmp}.bmpStr";
+            var currentFile = $"{bmp}.bmp";
             var filePath = Path.Combine(resourcesPath, currentFile);
 
             while (File.Exists(filePath))
@@ -215,11 +215,25 @@ namespace Dm.NET
                     Console.WriteLine($"圖片超過{limit}張");
                     return null;
                 }
-                currentFile = $"{bmp}{index}.bmpStr";
+                currentFile = $"{bmp}{index}.bmp";
                 filePath = Path.Combine(resourcesPath, currentFile);
             }
 
             Dm.Capture(0, 0, _width, _height, filePath);
+            return filePath;
+        }
+
+        /// <summary>
+        /// 截圖，如果大於limit則不截圖，避免佔用太多空間
+        /// </summary>
+        /// <param name="bmp"></param>
+        /// <param name="limit"></param>
+        public string? Capture(int x1, int y1, int x2, int y2, string bmp)
+        {
+            var currentFile = $"{bmp}.bmp";
+            var filePath = Path.Combine(resourcesPath, currentFile);
+
+            Dm.Capture(x1, y1, x2, y2, filePath);
             return filePath;
         }
 
