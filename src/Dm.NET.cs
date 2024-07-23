@@ -545,7 +545,7 @@ namespace Dm.NET
         /// <param name="sec"></param>
         public void McsAccurate(int intX, int intY, int sec = 2)
         {
-            MoveToInternal(intX, intY);
+            MoveToInternal(intX, intY, false);
             Dm.LeftClick();
             Thread.Sleep(sec * 1000);
         }

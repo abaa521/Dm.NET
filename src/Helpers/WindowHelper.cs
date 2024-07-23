@@ -23,12 +23,18 @@ namespace Dm.NET.Helpers
 
         public const int SW_RESTORE = 9;  // 激活並顯示窗口。如果窗口最小化或最大化，系統會將其恢復到原始大小和位置。
 
-        [DllImport("user32.dll", SetLastError = true)]
-        public static extern bool SetWindowPos(IntPtr hWnd, IntPtr hWndInsertAfter, int x, int y, int cx, int cy, uint uFlags);
+        // 設定主控台視窗的大小和位置
+        [DllImport("kernel32.dll", SetLastError = true)]
+        public static extern IntPtr GetConsoleWindow();
 
-        public static readonly IntPtr HWND_TOPMOST = new IntPtr(-1);
-        public const uint SWP_NOSIZE = 0x0001;
-        public const uint SWP_NOMOVE = 0x0002;
-        public const uint SWP_SHOWWINDOW = 0x0040;
+        [DllImport("user32.dll", SetLastError = true)]
+        private static extern bool MoveWindow(IntPtr hWnd, int X, int Y, int nWidth, int nHeight, bool bRepaint);
+
+        public static void SetPositionAndSizeMode(IntPtr hWnd, int X, int Y, int nWidth, int nHeight)
+        {
+            // 設定視窗的位置和大小
+            // 例如：位置 (100, 100)，大小 (800, 600)
+            MoveWindow(hWnd, X, Y, nWidth, nHeight, true);
+        }
     }
 }
