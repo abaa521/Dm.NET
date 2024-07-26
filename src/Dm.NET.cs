@@ -550,6 +550,20 @@ namespace Dm.NET
             Thread.Sleep(sec * 1000);
         }
 
+        public void McsAccurate(int intX, int intY)
+        {
+            MoveToInternal(intX, intY, false);
+            Dm.LeftClick();
+            Thread.Sleep(_sleepMilliseconds);
+        }
+
+        public void McsAccurate(int intX, int intY, double sec = 2.0)
+        {
+            MoveToInternal(intX, intY, false);
+            Dm.LeftClick();
+            Thread.Sleep((int)(sec * 1000));
+        }
+
         private bool disposed = false; // To detect redundant calls
 
         public void Dispose()
