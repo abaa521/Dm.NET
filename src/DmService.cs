@@ -398,9 +398,12 @@ namespace Dm.NET
             var currentTimes = 0;
             while (true)
             {
-                currentTimes++;
-                if (currentTimes > times)
-                    return false;
+                if (times != 0)
+                {
+                    currentTimes++;
+                    if (currentTimes > times)
+                        return false;
+                }
 
                 if (FindPicOrigin(x1, y1, x2, y2, bmpStr, sim) >= 0)
                     return true;
