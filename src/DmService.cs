@@ -222,11 +222,6 @@ namespace Dm.NET
             return filePath;
         }
 
-        /// <summary>
-        /// 截圖，如果大於limit則不截圖，避免佔用太多空間
-        /// </summary>
-        /// <param name="bmp"></param>
-        /// <param name="limit"></param>
         public string? Capture(int x1, int y1, int x2, int y2, string bmp)
         {
             var currentFile = $"{bmp}.bmp";
