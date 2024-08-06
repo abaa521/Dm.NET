@@ -410,7 +410,7 @@ namespace Dm.NET
 
         #endregion 圖片
 
-        public bool FindR(bool result, int times = 10)
+        public bool FindR(Func<bool> func, int times = 10)
         {
             var currentTimes = 0;
             while (true)
@@ -419,7 +419,7 @@ namespace Dm.NET
                 if (currentTimes > times)
                     return false;
 
-                if (result)
+                if (func.Invoke())
                     return true;
 
                 Thread.Sleep(1000);
