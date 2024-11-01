@@ -21,7 +21,9 @@ namespace Dm.NET.Helpers
         [return: MarshalAs(UnmanagedType.Bool)]
         public static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
 
-        public const int SW_RESTORE = 9;  // 激活並顯示窗口。如果窗口最小化或最大化，系統會將其恢復到原始大小和位置。
+        public const int SW_RESTORE = 9;
+        public const int SW_MAXIMIZE = 3;
+        public const int SW_MINIMIZE = 6;
 
         // 設定主控台視窗的大小和位置
         [DllImport("kernel32.dll", SetLastError = true)]

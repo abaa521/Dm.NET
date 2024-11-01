@@ -1,5 +1,6 @@
 ﻿using Dm.NET.Helpers;
 using System.Diagnostics;
+using System.Runtime.InteropServices;
 using System.Text;
 
 namespace Dm.NET
@@ -15,10 +16,11 @@ namespace Dm.NET
         private string resourcesPath = string.Empty;
         private double _ratio;
 
-        public dmsoft Dm { get; } = new();
+        public dmsoft Dm { get; }
 
         public DmService()
         {
+            Dm = new();
             if (!Debugger.IsAttached)
             {
                 // 關閉錯誤訊息
