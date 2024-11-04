@@ -1,6 +1,5 @@
 ﻿using Dm.NET.Helpers;
 using System.Diagnostics;
-using System.Runtime.InteropServices;
 using System.Text;
 
 namespace Dm.NET
@@ -50,16 +49,6 @@ namespace Dm.NET
 
         #region 視窗方法
 
-        public void MoveWindow(int hwnd0, int x, int y)
-        {
-            Dm.MoveWindow(hwnd0, x, y);
-        }
-
-        public void SetWindowOnTop(int hwnd0)
-        {
-            Dm.SetWindowState(hwnd0, 8);
-        }
-
         private int hwnd;
 
         /// <summary>
@@ -76,30 +65,6 @@ namespace Dm.NET
                 Thread.Sleep(1000);
 
             return result;
-        }
-
-        /// <summary>
-        /// 尋找視窗
-        /// </summary>
-        /// <param name="lpClassName"></param>
-        /// <param name="lpWindowName"></param>
-        /// <returns></returns>
-        public static int FindWindow(string lpClassName, string lpWindowName)
-        {
-            return WindowHelper.FindWindow(lpClassName, lpWindowName);
-        }
-
-        /// <summary>
-        /// 尋找視窗EX
-        /// </summary>
-        /// <param name="hwndParent"></param>
-        /// <param name="hwndChildAfter"></param>
-        /// <param name="lpClassName"></param>
-        /// <param name="lpWindowName"></param>
-        /// <returns></returns>
-        public static int FindWindowEx(nint hwndParent, nint hwndChildAfter, string lpClassName, string lpWindowName)
-        {
-            return WindowHelper.FindWindowEx(hwndParent, hwndChildAfter, lpClassName, lpWindowName);
         }
 
         /// <summary>
