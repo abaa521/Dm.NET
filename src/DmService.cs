@@ -9,6 +9,7 @@ namespace Dm.NET
     /// </summary>
     public class DmService : IDisposable
     {
+        private int _frequency;
         private int _width;
         private int _height;
         private int _sleepMilliseconds;
@@ -29,6 +30,7 @@ namespace Dm.NET
 
         public void Init()
         {
+            SetFrequency();
             SetPath();
             //SetDict();
             SetSize();
@@ -61,6 +63,7 @@ namespace Dm.NET
             this.hwnd = hwnd;
             var result = Dm.BindWindow(hwnd, "gdi", "windows", "windows", 0) == 1;
 
+            // 等待一下，避免太快
             if (result && sleep)
                 Thread.Sleep(1000);
 
@@ -76,6 +79,11 @@ namespace Dm.NET
         #endregion 視窗方法
 
         #region 設定
+
+        public void SetFrequency(int frequency = 1)
+        {
+            _frequency = frequency;
+        }
 
         public bool SetPath(string? path = null)
         {
@@ -342,34 +350,31 @@ namespace Dm.NET
 
         #region PicR
 
-        public bool FindPicR(string? bmps, int times = 10, double sim = 0.7)
+        public bool FindPicR(string? bmps, int sec = 10, double sim = 0.7)
         {
-            return FindPicRInternal(0, 0, _width, _height, bmps, times, sim);
+            return FindPicRInternal(0, 0, _width, _height, bmps, sec, sim);
         }
 
-        public bool FindPicR(int x1, int y1, int x2, int y2, string? bmps, int times = 10, double sim = 0.7)
+        public bool FindPicR(int x1, int y1, int x2, int y2, string? bmps, int sec = 10, double sim = 0.7)
         {
-            return FindPicRInternal(x1, y1, x2, y2, bmps, times, sim);
+            return FindPicRInternal(x1, y1, x2, y2, bmps, sec, sim);
         }
 
-        private bool FindPicRInternal(int x1, int y1, int x2, int y2, string? bmpQuery, int times, double sim)
+        private bool FindPicRInternal(int x1, int y1, int x2, int y2, string? bmpQuery, int sec, double sim)
         {
             var bmpStr = ProcessBmpQuery(bmpQuery);
 
-            var currentTimes = 0;
+            Stopwatch stopwatch = new Stopwatch();
+            stopwatch.Start();
             while (true)
             {
-                if (times != 0)
-                {
-                    currentTimes++;
-                    if (currentTimes > times)
-                        return false;
-                }
+                if (sec != 0 && sec * 1000 < stopwatch.ElapsedMilliseconds)
+                    return false;
 
                 if (FindPicOrigin(x1, y1, x2, y2, bmpStr, sim) >= 0)
                     return true;
 
-                Thread.Sleep(1000);
+                Thread.Sleep(1000 / _frequency);
             }
         }
 
@@ -377,19 +382,19 @@ namespace Dm.NET
 
         #endregion 圖片
 
-        public bool FindR(Func<bool> func, int times = 10)
+        public bool FindR(Func<bool> func, int sec = 10)
         {
-            var currentTimes = 0;
+            Stopwatch stopwatch = new Stopwatch();
+            stopwatch.Start();
             while (true)
             {
-                currentTimes++;
-                if (currentTimes > times)
+                if (sec != 0 && sec * 1000 < stopwatch.ElapsedMilliseconds)
                     return false;
 
                 if (func.Invoke())
                     return true;
 
-                Thread.Sleep(1000);
+                Thread.Sleep(1000 / _frequency);
             }
         }
 
