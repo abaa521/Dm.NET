@@ -80,7 +80,7 @@ namespace Dm.NET
 
         #region 設定
 
-        public void SetFrequency(int frequency = 1)
+        public void SetFrequency(int frequency = 10)
         {
             _frequency = frequency;
         }
