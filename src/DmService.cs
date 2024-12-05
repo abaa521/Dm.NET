@@ -364,7 +364,7 @@ namespace Dm.NET
         {
             var bmpStr = ProcessBmpQuery(bmpQuery);
 
-            Stopwatch stopwatch = new Stopwatch();
+            Stopwatch stopwatch = new();
             stopwatch.Start();
             while (true)
             {
