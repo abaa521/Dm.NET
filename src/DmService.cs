@@ -475,34 +475,48 @@ namespace Dm.NET
 
         public void Mcs()
         {
-            MoveToInternal(X, Y);
+            MoveToInternal(X, Y, false, false);
             Dm.LeftClick();
             Thread.Sleep(_sleepMilliseconds);
         }
 
         public void Mcs(int sec)
         {
-            MoveToInternal(X, Y);
+            MoveToInternal(X, Y, false, false);
             Dm.LeftClick();
             Thread.Sleep(sec * 1000);
         }
 
         public void Mcs(double sec)
         {
-            MoveToInternal(X, Y);
+            MoveToInternal(X, Y, false, false);
             Dm.LeftClick();
             Thread.Sleep((int)(sec * 1000));
         }
 
-        public void MoveToInternal(int x, int y, bool random = true)
+        public void MoveToInternal(int x, int y, bool random = true, bool ratio = true)
         {
             if (random)
             {
-                Dm.MoveTo((int)(x * _ratio) + RandomHelper.GetRandomNumberMove(), (int)(y * _ratio + RandomHelper.GetRandomNumberMove()));
+                if (ratio)
+                {
+                    Dm.MoveTo((int)(x * _ratio) + RandomHelper.GetRandomNumberMove(), (int)(y * _ratio + RandomHelper.GetRandomNumberMove()));
+                }
+                else
+                {
+                    Dm.MoveTo((int)(x) + RandomHelper.GetRandomNumberMove(), (int)(y + RandomHelper.GetRandomNumberMove()));
+                }
             }
             else
             {
-                Dm.MoveTo((int)(x * _ratio), (int)(y * _ratio));
+                if (ratio)
+                {
+                    Dm.MoveTo((int)(x * _ratio), (int)(y * _ratio));
+                }
+                else
+                {
+                    Dm.MoveTo((int)(x), (int)(y));
+                }
             }
         }
 
