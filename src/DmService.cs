@@ -51,17 +51,19 @@ namespace Dm.NET
 
         #region 視窗方法
 
-        private int hwnd;
+        private int hwnd1;
+        private int? hwnd0;
 
         /// <summary>
         /// 綁定視窗
         /// </summary>
-        /// <param name="hwnd"></param>
+        /// <param name="hwnd1"></param>
         /// <returns></returns>
-        public bool BindWindow(int hwnd, bool sleep = true)
+        public bool BindWindow(int? hwnd0, int hwnd1, bool sleep = true)
         {
-            this.hwnd = hwnd;
-            var result = Dm.BindWindow(hwnd, "gdi", "windows", "windows", 0) == 1;
+            this.hwnd0 = hwnd0;
+            this.hwnd1 = hwnd1;
+            var result = Dm.BindWindow(hwnd1, "gdi", "windows", "windows", 0) == 1;
 
             // 等待一下，避免太快
             if (result && sleep)
@@ -114,12 +116,10 @@ namespace Dm.NET
             var dictPath = Path.Combine(resourcesPath, dictNameWithTxt);
             if (!File.Exists(dictPath))
             {
-                using (FileStream fs = File.Create(dictPath))
-                {
-                    // 這裡可以寫一些初始化的內容到檔案中
-                    byte[] info = new UTF8Encoding(true).GetBytes("1F0F7E00C00801805FF0$0$0.0.33$12\r\n");
-                    fs.Write(info, 0, info.Length);
-                }
+                using FileStream fs = File.Create(dictPath);
+                // 這裡可以寫一些初始化的內容到檔案中
+                byte[] info = new UTF8Encoding(true).GetBytes("1F0F7E00C00801805FF0$0$0.0.33$12\r\n");
+                fs.Write(info, 0, info.Length);
             }
             return Dm.SetDict(0, dictPath) == 1;
         }
@@ -151,13 +151,13 @@ namespace Dm.NET
 
         public void SendString(string str)
         {
-            Dm.SendString(hwnd, str);
-            Thread.Sleep(2000);
+            Dm.SendString(hwnd1, str);
+            CloseAndSleep(2000);
         }
 
-        //public bool GetClientSize(int hwnd, out object width, out object height)
+        //public bool GetClientSize(int hwnd1, out object width, out object height)
         //{
-        //    return dm.GetClientSize(hwnd,) == 1;
+        //    return dm.GetClientSize(hwnd1,) == 1;
         //}
 
         /// <summary>
@@ -374,7 +374,7 @@ namespace Dm.NET
                 if (FindPicOrigin(x1, y1, x2, y2, bmpStr, sim) >= 0)
                     return true;
 
-                Thread.Sleep(1000 / _frequency);
+                CloseAndSleep(1000 / _frequency);
             }
         }
 
@@ -394,7 +394,7 @@ namespace Dm.NET
                 if (func.Invoke())
                     return true;
 
-                Thread.Sleep(1000 / _frequency);
+                CloseAndSleep(1000 / _frequency);
             }
         }
 
@@ -427,7 +427,7 @@ namespace Dm.NET
             }
 
             Dm.LeftUp();         // 釋放左鍵
-            Thread.Sleep(_sleepMilliseconds);  // 完成後等待
+            CloseAndSleep(_sleepMilliseconds);  // 完成後等待
         }
 
         /// <summary>
@@ -440,58 +440,58 @@ namespace Dm.NET
         {
             MoveToInternal(intX, intY);
             Dm.LeftDown();
-            Thread.Sleep(sec * 1000);
+            CloseAndSleep(sec * 1000);
             Dm.LeftUp();
-            Thread.Sleep(_sleepMilliseconds);
+            CloseAndSleep(_sleepMilliseconds);
         }
 
         public void Mcs(int intX, int intY)
         {
             MoveToInternal(intX, intY);
             Dm.LeftClick();
-            Thread.Sleep(_sleepMilliseconds);
+            CloseAndSleep(_sleepMilliseconds);
         }
 
         public void Mcs(int intX, int intY, int sec = 2)
         {
             MoveToInternal(intX, intY);
             Dm.LeftClick();
-            Thread.Sleep(sec * 1000);
+            CloseAndSleep(sec * 1000);
         }
 
         public void Mcs(int intX, int intY, double sec = 2.0)
         {
             MoveToInternal(intX, intY);
             Dm.LeftClick();
-            Thread.Sleep((int)(sec * 1000));
+            CloseAndSleep((int)(sec * 1000));
         }
 
         public void McsEx(int intXEx, int intYEx, int sec = 2)
         {
             MoveToInternal(X + intXEx, Y + intYEx);
             Dm.LeftClick();
-            Thread.Sleep(sec * 1000);
+            CloseAndSleep(sec * 1000);
         }
 
         public void Mcs()
         {
             MoveToInternal(X, Y, false, false);
             Dm.LeftClick();
-            Thread.Sleep(_sleepMilliseconds);
+            CloseAndSleep(_sleepMilliseconds);
         }
 
         public void Mcs(int sec)
         {
             MoveToInternal(X, Y, false, false);
             Dm.LeftClick();
-            Thread.Sleep(sec * 1000);
+            CloseAndSleep(sec * 1000);
         }
 
         public void Mcs(double sec)
         {
             MoveToInternal(X, Y, false, false);
             Dm.LeftClick();
-            Thread.Sleep((int)(sec * 1000));
+            CloseAndSleep((int)(sec * 1000));
         }
 
         public void MoveToInternal(int x, int y, bool random = true, bool ratio = true)
@@ -530,21 +530,21 @@ namespace Dm.NET
         {
             MoveToInternal(intX, intY, false);
             Dm.LeftClick();
-            Thread.Sleep(sec * 1000);
+            CloseAndSleep(sec * 1000);
         }
 
         public void McsAccurate(int intX, int intY)
         {
             MoveToInternal(intX, intY, false);
             Dm.LeftClick();
-            Thread.Sleep(_sleepMilliseconds);
+            CloseAndSleep(_sleepMilliseconds);
         }
 
-        public void McsAccurate(int intX, int intY, double sec = 2.0)
+        public void McsAccurate(int intX, int intY, double sec = 2.0, bool close = true)
         {
             MoveToInternal(intX, intY, false);
             Dm.LeftClick();
-            Thread.Sleep((int)(sec * 1000));
+            CloseAndSleep((int)(sec * 1000), close);
         }
 
         private bool disposed = false; // To detect redundant calls
@@ -578,5 +578,31 @@ namespace Dm.NET
         }
 
         #endregion 滑鼠
+
+        public void CloseAndSleep(int millisecondsTimeout, bool close = true)
+        {
+            Thread.Sleep(10);
+            if (hwnd0.HasValue && close)
+            {
+                CloseWindow();
+            }
+
+            Thread.Sleep(millisecondsTimeout);
+            if (hwnd0.HasValue && close)
+            {
+                ShowWindow();
+            }
+            Thread.Sleep(10);
+        }
+
+        public void CloseWindow()
+        {
+            WindowHelper.ShowWindow(hwnd0.Value, WindowHelper.SW_MINIMIZE);
+        }
+
+        public void ShowWindow()
+        {
+            WindowHelper.ShowWindow(hwnd0.Value, WindowHelper.SW_RESTORE);
+        }
     }
 }
